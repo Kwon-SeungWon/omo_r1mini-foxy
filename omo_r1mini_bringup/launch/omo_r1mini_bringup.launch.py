@@ -30,6 +30,14 @@ def generate_launch_description():
     )
   )
 
+  omo_r1mini_imu_parameter = LaunchConfiguration(
+    'omo_r1mini_imu_parameter',
+    default=os.path.join(
+      get_package_share_directory('omo_r1mini_bringup'),
+      'param/omo_r1mini_imu.yaml'
+    )
+  )
+  
   use_sim_time = LaunchConfiguration('use_sim_time', default='false')
 
   omo_r1mini_description_dir = LaunchConfiguration(
@@ -51,6 +59,11 @@ def generate_launch_description():
       default_value=omo_r1mini_lidar_parameter
     ),
 
+    DeclareLaunchArgument(
+      'omo_r1mini_imu_parameter',
+      default_value=omo_r1mini_imu_parameter
+    ),
+
     IncludeLaunchDescription(
       PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/omo_r1mini_mcu.launch.py']),
       launch_arguments={'omo_r1mini_mcu_parameter': omo_r1mini_mcu_parameter}.items()
@@ -59,6 +72,11 @@ def generate_launch_description():
     IncludeLaunchDescription(
       PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/omo_r1mini_lidar.launch.py']),
       launch_arguments={'omo_r1mini_lidar_parameter': omo_r1mini_lidar_parameter}.items()
+    ),
+
+    IncludeLaunchDescription(
+      PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/omo_r1mini_imu.launch.py']),
+      launch_arguments={'omo_r1mini_imu_parameter': omo_r1mini_imu_parameter}.items()
     ),
     
     IncludeLaunchDescription(
