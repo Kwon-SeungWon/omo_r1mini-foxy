@@ -146,8 +146,16 @@ class OMOR1MiniNode(Node):
     
     # Set publisher
     self.pub_JointStates = self.create_publisher(JointState, 'joint_states', 10)
+<<<<<<< HEAD
     #self.pub_IMU = self.create_publisher(Imu, 'imu', 10)
     self.pub_Odom = self.create_publisher(Odometry, 'odom_encoder', 10)
+||||||| 313d413
+    self.pub_IMU = self.create_publisher(Imu, 'imu', 10)
+    self.pub_Odom = self.create_publisher(Odometry, 'odom', 10)
+=======
+    #self.pub_IMU = self.create_publisher(Imu, 'imu', 10)
+    self.pub_Odom = self.create_publisher(Odometry, 'odom', 10)
+>>>>>>> 69656dceed3f0035f83ab645cbda630b09a0da23
     self.pub_OdomTF = TransformBroadcaster(self)
     self.pub_pose = self.create_publisher(Pose, 'pose', 10)
 
