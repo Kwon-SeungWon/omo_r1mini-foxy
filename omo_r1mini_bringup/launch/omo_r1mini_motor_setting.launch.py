@@ -15,7 +15,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    usb_port = LaunchConfiguration('usb_port', default='/dev/ttyACM0')
+    usb_port = LaunchConfiguration('usb_port', default='/dev/ttyMotor')
 
     tb3_param_dir = LaunchConfiguration(
         'tb3_param_dir',
@@ -24,7 +24,7 @@ def generate_launch_description():
 
     omo_r1mini_description_dir = LaunchConfiguration(
         'omo_r1mini_description_dir',
-        default=os.path.join(get_package_share_directory('omo_r1mini_description'), 'launch')))
+        default=os.path.join(get_package_share_directory('omo_r1mini_description'), 'launch'))
 
     # lidar_pkg_dir = LaunchConfiguration(
     #     'lidar_pkg_dir',

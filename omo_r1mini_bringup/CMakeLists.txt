@@ -32,7 +32,7 @@ find_package(omo_r1mini_interfaces REQUIRED)
 # Install
 ################################################################################
 install(
-  DIRECTORY launch param
+  DIRECTORY launch param config
   DESTINATION share/${PROJECT_NAME}
 )
 

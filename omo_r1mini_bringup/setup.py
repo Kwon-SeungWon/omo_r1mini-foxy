@@ -38,7 +38,8 @@ setup(
     entry_points={
         'console_scripts': [
             'omo_r1mini_mcu_node = omo_r1mini_bringup.scripts.omo_r1mini_mcu_node:main',
-            'omo_r1mini_motor_setting_node = omo_r1mini_bringup.scripts.omo_r1mini_motor_setting_node:main'
+            'omo_r1mini_motor_setting_node = omo_r1mini_bringup.scripts.omo_r1mini_motor_setting_node:main',
+            'omo_r1mini_imu_node = omo_r1mini_bringup.scripts.omo_r1mini_imu_node:main'
         ],
     },
 )
