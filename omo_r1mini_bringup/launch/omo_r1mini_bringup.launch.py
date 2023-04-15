@@ -84,21 +84,12 @@ def generate_launch_description():
       PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/omo_r1mini_lidar.launch.py']),
       launch_arguments={'omo_r1mini_lidar_parameter': omo_r1mini_lidar_parameter}.items()
     ),
-<<<<<<< HEAD
 
     IncludeLaunchDescription(
       PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/omo_r1mini_imu.launch.py']),
       launch_arguments={'omo_r1mini_imu_parameter': omo_r1mini_imu_parameter}.items()
     ),
     
-||||||| 313d413
-=======
-
-    IncludeLaunchDescription(
-      PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/omo_r1mini_imu.launch.py']),
-      launch_arguments={'omo_r1mini_imu_parameter': omo_r1mini_imu_parameter}.items()
-    ),
->>>>>>> 69656dceed3f0035f83ab645cbda630b09a0da23
     
     IncludeLaunchDescription(
       PythonLaunchDescriptionSource([omo_r1mini_description_dir, '/omo_r1mini_state_publisher.launch.py']),

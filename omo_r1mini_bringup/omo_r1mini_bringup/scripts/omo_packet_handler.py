@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import serial
 import io
@@ -28,6 +28,7 @@ class ReadLine:
 
 class PacketHandler:
    def __init__(self, _port_name, _baud_rate):
+      #_port_name = "/dev/ttyUSB0"
       _port_name = "/dev/ttyMotor"
       _baud_rate = 115200
       self.port_name = _port_name
@@ -46,6 +47,8 @@ class PacketHandler:
       self.incomming_info = ['ODO', 'VW', 'POSE', 'ACCL', 'GYRO']
       self._vel = [0.0, 0.0]
       self._enc = [0.0, 0.0]
+      self._enc_off = [0.0,0.0]
+      self._off = False
       self._wodom = [0.0, 0.0]
       self._rpm = [0.0, 0.0]
       self._wvel = [0.0, 0.0]
@@ -77,22 +80,22 @@ class PacketHandler:
 
          #whole_packet = (self._ser.readline().split(b'\r')[0]).decode("utf-8").strip()
          whole_packet = self.read_port()
-
+         #print(whole_packet)   
          if whole_packet:
-            #print(whole_packet)
+            print(whole_packet)
             #packet = whole_packet.split(',')
             packet = whole_packet.split(b',')
             try:
                header = packet[0].split(b'#')[1]
-               if header.startswith(b'VW'):
+               if header.startswith(b'QVW'):
                   self._vel = [float(packet[1]), float(packet[2])]
-               elif header.startswith(b'ENCOD'):
+               elif header.startswith(b'QENCOD'):
                   self._enc = [int(packet[1]), int(packet[2])]
-               elif header.startswith(b'ODO'):
+               elif header.startswith(b'QODO'):
                   self._wodom = [float(packet[1]), float(packet[2])]
-               elif header.startswith(b'RPM'):
+               elif header.startswith(b'QRPM'):
                   self._rpm = [int(packet[1]), int(packet[2])]
-               elif header.startswith(b'DIFFV'):
+               elif header.startswith(b'QDIFFV'):
                   self._wvel = [int(packet[1]), int(packet[2])]
                elif header.startswith(b'GYRO'):
                   self._gyro = [float(packet[1]), float(packet[2]), float(packet[3])]

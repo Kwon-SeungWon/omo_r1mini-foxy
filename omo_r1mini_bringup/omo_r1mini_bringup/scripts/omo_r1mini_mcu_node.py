@@ -49,6 +49,7 @@ class ComplementaryFilter():
     self.gyro_bias = 0.
     self.count_for_gyro_bias = 110
 
+
   def gyro_calibration(self, gyro):
     self.count_for_gyro_bias -= 1
 
@@ -101,6 +102,8 @@ class OMOR1MiniNode(Node):
     print('WHEEL SEPARATION:\t%s'%(self.wheel_separation))
     print('WHEEL RADIUS:\t\t%s'%(self.wheel_radius))
     print('ENC_PULSES:\t\t%s'%(self.enc_pulse))
+    self.enc_prev_l = 0
+    self.enc_prev_r = 0
 
     try:
       self.distance_per_pulse = 2*math.pi*self.wheel_radius / self.enc_pulse / self.gear_ratio
@@ -146,16 +149,8 @@ class OMOR1MiniNode(Node):
     
     # Set publisher
     self.pub_JointStates = self.create_publisher(JointState, 'joint_states', 10)
-<<<<<<< HEAD
     #self.pub_IMU = self.create_publisher(Imu, 'imu', 10)
     self.pub_Odom = self.create_publisher(Odometry, 'odom_encoder', 10)
-||||||| 313d413
-    self.pub_IMU = self.create_publisher(Imu, 'imu', 10)
-    self.pub_Odom = self.create_publisher(Odometry, 'odom', 10)
-=======
-    #self.pub_IMU = self.create_publisher(Imu, 'imu', 10)
-    self.pub_Odom = self.create_publisher(Odometry, 'odom', 10)
->>>>>>> 69656dceed3f0035f83ab645cbda630b09a0da23
     self.pub_OdomTF = TransformBroadcaster(self)
     self.pub_pose = self.create_publisher(Pose, 'pose', 10)
 
@@ -178,11 +173,19 @@ class OMOR1MiniNode(Node):
   def convert2odo_from_each_wheel(self, enc_l, enc_r):
     return enc_l * self.distance_per_pulse, enc_r * self.distance_per_pulse
 
-  def update_odometry(self, odo_l, odo_r, trans_vel, orient_vel, vel_z):
+  def update_odometry(self, enc_l,enc_r,odo_l, odo_r, trans_vel, orient_vel, vel_z):
     odo_l /= 1000.
     odo_r /= 1000.
     trans_vel /= 1000.
     orient_vel /= 1000.
+
+    enc_left_diff = enc_l - self.enc_prev_l
+    enc_right_diff = enc_r - self.enc_prev_r
+
+    self.enc_prev_l = enc_l
+    self.enc_prev_r = enc_r
+    print("l:   " , enc_left_diff)
+    print("r:   " , enc_right_diff)
 
     self.odom_pose.timestamp = self.get_clock().now()
     dt = (self.odom_pose.timestamp - self.odom_pose.pre_timestamp).nanoseconds * 1e-9
@@ -198,18 +201,34 @@ class OMOR1MiniNode(Node):
     else:
         self.odom_pose.theta += orient_vel * dt
 
-    d_x = trans_vel * math.cos(self.odom_pose.theta) 
-    d_y = trans_vel * math.sin(self.odom_pose.theta) 
-    self.odom_pose.x += d_x * dt
-    self.odom_pose.y += d_y * dt
+    # d_x = trans_vel * math.cos(self.odom_pose.theta) 
+    # d_y = trans_vel * math.sin(self.odom_pose.theta) 
+    # self.odom_pose.x += d_x * dt
+    # self.odom_pose.y += d_y * dt
     #print('ODO L:%.2f, R:%.2f, V:%.2f, W=%.2f --> X:%.2f, Y:%.2f, Theta:%.2f'
     #  %(odo_l, odo_r, trans_vel, orient_vel, 
     #  self.odom_pose.x,self.odom_pose.y,self.odom_pose.theta))
+    d_s = (enc_left_diff + enc_right_diff) * self.distance_per_pulse / 2.0
+
+    b_l = enc_left_diff * self.distance_per_pulse
+    b_r = enc_right_diff * self.distance_per_pulse
+
+    r = (b_r + b_l) / 2.0
+    d_theta = (b_r - b_l) / self.wheel_separation 
+    self.odom_pose.theta += d_theta
+
+    self.odom_pose.x += math.cos(self.odom_pose.theta) * r
+    self.odom_pose.y += math.sin(self.odom_pose.theta) * r
+
+    self.odom_vel.x = d_s / dt
+    self.odom_vel.y = 0.0
+    self.odom_vel.w = d_theta / dt
+
     q = quaternion_from_euler(0, 0, self.odom_pose.theta)
 
-    self.odom_vel.x = trans_vel
-    self.odom_vel.y = 0.
-    self.odom_vel.w = orient_vel
+    # self.odom_vel.x = trans_vel
+    # self.odom_vel.y = 0.
+    # self.odom_vel.w = orient_vel
 
     timestamp_now = self.get_clock().now().to_msg()
     # Set odometry data
@@ -225,9 +244,9 @@ class OMOR1MiniNode(Node):
     odom.pose.pose.orientation.z = q[2]
     odom.pose.pose.orientation.w = q[3]
 
-    odom.twist.twist.linear.x = trans_vel
+    odom.twist.twist.linear.x = self.odom_vel.x 
     odom.twist.twist.linear.y = 0.0
-    odom.twist.twist.angular.z = orient_vel
+    odom.twist.twist.angular.z = self.odom_vel.w
 
     self.pub_Odom.publish(odom)
 
@@ -278,6 +297,16 @@ class OMOR1MiniNode(Node):
   def update_robot(self):
     #raw_data = self.ph.parser()
     self.ph.read_packet()
+    if self.ph._off == False:
+      self.ph._enc_off[0] = self.ph._enc[0]
+      self.ph._enc_off[1] = self.ph._enc[1]
+      self.ph._off = True
+    
+    # enc_l과 r은 diff 즉, 변화량
+    enc_l = self.ph._enc[0] - self.ph._enc_off[0]
+    enc_r = self.ph._enc[1] - self.ph._enc_off[1]
+    # print("l:   " , self.ph._enc[0])
+    # print("r:   " , enc_r)
     odo_l = self.ph._wodom[0]
     odo_r = self.ph._wodom[1]
     trans_vel = self.ph._vel[0]
@@ -288,7 +317,7 @@ class OMOR1MiniNode(Node):
     # pitch_imu = self.ph._imu[1]
     # yaw_imu = self.ph._imu[2]
 
-    self.update_odometry(odo_l, odo_r, trans_vel, orient_vel, vel_z)
+    self.update_odometry(enc_l,enc_r,odo_l, odo_r, trans_vel, orient_vel, vel_z)
     self.updateJointStates(odo_l, odo_r, trans_vel, orient_vel)
 
     # self.updatePoseStates(roll_imu, pitch_imu, yaw_imu)
@@ -299,7 +328,7 @@ class OMOR1MiniNode(Node):
 
     lin_vel_x = max(-self.max_lin_vel_x, min(self.max_lin_vel_x, lin_vel_x))
     ang_vel_z = max(-self.max_ang_vel_z, min(self.max_ang_vel_z, ang_vel_z))
-    print("CMD_VEL V_x:%s m/s, Rot_z:%s deg/s"%(lin_vel_x, ang_vel_z))
+    #print("CMD_VEL V_x:%s m/s, Rot_z:%s deg/s"%(lin_vel_x, ang_vel_z))
     self.ph.write_base_velocity(lin_vel_x*1000, ang_vel_z*1000)
 
   def cbSrv_headlight(self, request, response):
